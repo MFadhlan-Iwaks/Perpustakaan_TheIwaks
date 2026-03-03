@@ -13,9 +13,22 @@
         </div>
     </div>
     <script>
-        function showModal(pesan, link_tujuan) {
+        function showModal(pesan, action) {
             document.getElementById('modalText').innerText = pesan; 
-            document.getElementById('modalConfirmBtn').href = link_tujuan; 
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            
+            if (typeof action === 'function') {
+                confirmBtn.href = '#';
+                confirmBtn.onclick = async function(e) {
+                    e.preventDefault();
+                    await action();
+                    closeModal();
+                };
+            } else {
+                confirmBtn.href = action;
+                confirmBtn.onclick = null;
+            }
+            
             document.getElementById('customModal').classList.add('active'); 
         }
 

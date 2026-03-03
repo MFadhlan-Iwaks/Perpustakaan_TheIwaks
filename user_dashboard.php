@@ -89,12 +89,35 @@ include 'layouts/header.php';
                     <span class="stok-badge">Stok: <?= $buku['stok']; ?></span>
 
                     <a href="#"
-                        onclick="showModal('Pinjam buku <?= addslashes($buku['judul']); ?> ini selama 7 hari?', 'proses/pinjam_proses.php?id=<?= $buku['id_buku']; ?>'); return false;"
+                        onclick="pinjamBuku(<?= $buku['id_buku']; ?>, '<?= addslashes($buku['judul']); ?>'); return false;"
                         class="btn-pinjam">Pinjam Buku</a>
                 </div>
             </div>
         <?php endwhile; ?>
     </div>
 </div>
+
+<script>
+    const currentUserId = <?= $_SESSION['id_user']; ?>;
+    
+    async function pinjamBuku(idBuku, judul) {
+        showModal(`Pinjam buku "${judul}" ini selama 7 hari?`, async () => {
+            try {
+                const response = await fetch('api/peminjaman.php?action=pinjam', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_user: currentUserId, id_buku: idBuku })
+                });
+                const result = await response.json();
+                alert(result.message);
+                if (result.status === 'success') {
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Gagal memproses peminjaman.');
+            }
+        });
+    }
+</script>
 
 <?php include 'layouts/footer.php'; ?>

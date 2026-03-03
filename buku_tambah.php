@@ -13,7 +13,7 @@ include 'layouts/header.php';
 <div class="card-container" style="max-width: 700px; margin: 0 auto;">
     <h3 class="header-title">Tambah Buku Baru</h3>
 
-    <form action="proses/buku_proses.php" method="POST" enctype="multipart/form-data">
+    <form id="tambahBukuForm" enctype="multipart/form-data">
         <div style="margin-bottom: 15px;">
             <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Judul Buku</label>
             <input type="text" name="judul" required
@@ -71,9 +71,53 @@ include 'layouts/header.php';
                 style="width: 100%; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc;">
         </div>
 
-        <button type="submit" name="tambah_buku" class="btn-primary" style="width: 100%;">Simpan Buku ke
+        <div id="api-message" style="margin-bottom: 15px; font-size: 14px; text-align: center;"></div>
+
+        <button type="submit" class="btn-primary" style="width: 100%;">Simpan Buku ke
             Database</button>
     </form>
+</div>
+
+<script>
+    document.getElementById('tambahBukuForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const messageDiv = document.getElementById('api-message');
+        const submitBtn = this.querySelector('button[type="submit"]');
+        
+        messageDiv.textContent = 'Menyimpan...';
+        messageDiv.style.color = '#475569';
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('api/buku.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                messageDiv.textContent = 'Buku berhasil ditambahkan!';
+                messageDiv.style.color = '#166534';
+                
+                setTimeout(() => {
+                    window.location.href = 'petugas_dashboard.php';
+                }, 1500);
+            } else {
+                messageDiv.textContent = result.message;
+                messageDiv.style.color = '#991b1b';
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            messageDiv.textContent = 'Terjadi kesalahan pada server.';
+            messageDiv.style.color = '#991b1b';
+            submitBtn.disabled = false;
+            console.error('Error:', error);
+        }
+    });
+</script>
 </div>
 
 <?php include 'layouts/footer.php'; ?>

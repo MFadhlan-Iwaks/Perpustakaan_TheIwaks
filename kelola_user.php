@@ -59,8 +59,11 @@ include 'layouts/header.php';
                             </td>
                             <td>
                                     <?php if ($u['id_user'] != $_SESSION['id_user']): ?>
-                                    <a href="#" class="btn-danger"
-                                        onclick="showModal('Yakin ingin menghapus pengguna <?= addslashes($u['nama_lengkap']); ?> dari database?', 'proses/user_proses.php?hapus=<?= $u['id_user']; ?>'); return false;">Hapus</a>
+                                    <div style="display: flex; gap: 5px;">
+                                        <a href="user_edit.php?id=<?= $u['id_user']; ?>" class="btn-primary" style="background: #0ea5e9; font-size: 12px; padding: 6px 12px; border-radius: 6px;">Edit</a>
+                                        <a href="#" class="btn-danger" style="font-size: 12px; padding: 6px 12px; border-radius: 6px;"
+                                            onclick="hapusUser(<?= $u['id_user']; ?>, '<?= addslashes($u['nama_lengkap']); ?>'); return false;">Hapus</a>
+                                    </div>
                                     <?php else: ?>
                                     <span style="font-size: 12px; color: #94a3b8; font-style: italic;">Sedang Login</span>
                                     <?php endif; ?>
@@ -73,5 +76,24 @@ include 'layouts/header.php';
 
     </div>
 </div>
+
+<script>
+    async function hapusUser(idUser, nama) {
+        showModal(`Yakin ingin menghapus pengguna "${nama}" dari database?`, async () => {
+            try {
+                const response = await fetch(`api/user.php?id=${idUser}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                alert(result.message);
+                if (result.status === 'success') {
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Gagal menghapus pengguna.');
+            }
+        });
+    }
+</script>
 
 <?php include 'layouts/footer.php'; ?>

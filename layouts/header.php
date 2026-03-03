@@ -27,11 +27,11 @@
                 <a href="buku_tambah.php">Tambah Buku</a>
                 <a href="peminjaman_data.php">Data Peminjaman</a>
                 <a href="kelola_user.php">Kelola Pengguna</a>
-                <a href="proses/logout.php" class="btn-logout">Logout (<?= $_SESSION['username']; ?>)</a>
+                <a href="api/logout.php" class="btn-logout">Logout (<?= $_SESSION['username']; ?>)</a>
             <?php else: ?>
                 <a href="user_dashboard.php">Katalog Buku</a>
                 <a href="user_pinjaman.php">Pinjaman Saya</a>
-                <a href="proses/logout.php" class="btn-logout">Logout (<?= $_SESSION['username']; ?>)</a>
+                <a href="api/logout.php" class="btn-logout">Logout (<?= $_SESSION['username']; ?>)</a>
             <?php endif; ?>
         </div>
     </nav>

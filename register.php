@@ -32,7 +32,7 @@ if (isset($_SESSION['role'])) {
             }
             ?>
 
-            <form action="proses/auth_proses.php" method="POST">
+            <form id="registerForm">
                 <div class="input-group">
                     <label for="nama_lengkap">Nama Lengkap</label>
                     <input type="text" id="nama_lengkap" name="nama_lengkap" required autocomplete="off">
@@ -48,8 +48,52 @@ if (isset($_SESSION['role'])) {
                     <input type="password" id="password" name="password" required>
                 </div>
                 
-                <button type="submit" name="register_submit" class="btn-primary">Sign Up</button>
+                <div id="api-message" style="margin-bottom: 15px; font-size: 14px; text-align: center;"></div>
+
+                <button type="submit" class="btn-primary">Sign Up</button>
             </form>
+
+            <script>
+                document.getElementById('registerForm').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const nama_lengkap = document.getElementById('nama_lengkap').value;
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+                    const messageDiv = document.getElementById('api-message');
+                    
+                    messageDiv.textContent = 'Memproses...';
+                    messageDiv.style.color = '#475569';
+
+                    try {
+                        const response = await fetch('api/auth.php?action=register', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ nama_lengkap, username, password })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.status === 'success') {
+                            messageDiv.textContent = 'Pendaftaran Berhasil! Silakan Sign In.';
+                            messageDiv.style.color = '#166534';
+                            
+                            setTimeout(() => {
+                                window.location.href = 'index.php';
+                            }, 1500);
+                        } else {
+                            messageDiv.textContent = result.message;
+                            messageDiv.style.color = '#991b1b';
+                        }
+                    } catch (error) {
+                        messageDiv.textContent = 'Terjadi kesalahan pada server.';
+                        messageDiv.style.color = '#991b1b';
+                        console.error('Error:', error);
+                    }
+                });
+            </script>
 
             <p class="auth-footer">
                 Sudah punya akun? <a href="index.php">Sign In di sini</a>

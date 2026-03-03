@@ -52,7 +52,7 @@ include 'layouts/header.php';
                         <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
                             <a href="buku_edit.php?id=<?= $row['id_buku']; ?>" class="btn-primary" style="background: #0ea5e9; font-size: 13px; padding: 0 16px; height: 34px; display: inline-flex; align-items: center; justify-content: center; box-shadow: none; border-radius: 6px;">Edit</a>
                             
-                            <a href="#" onclick="showModal('Yakin ingin menghapus buku <?= addslashes($row['judul']); ?> dari database?', 'proses/buku_proses.php?hapus=<?= $row['id_buku']; ?>'); return false;" class="btn-danger" style="font-size: 13px; padding: 0 16px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">Hapus</a>
+                            <a href="#" onclick="hapusBuku(<?= $row['id_buku']; ?>, '<?= addslashes($row['judul']); ?>'); return false;" class="btn-danger" style="font-size: 13px; padding: 0 16px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">Hapus</a>
                         </div>
                     </td>
                 </tr>
@@ -61,6 +61,25 @@ include 'layouts/header.php';
         </table>
     </div>
 </div>
+
+<script>
+    async function hapusBuku(idBuku, judul) {
+        showModal(`Yakin ingin menghapus buku "${judul}" dari database?`, async () => {
+            try {
+                const response = await fetch(`api/buku.php?id=${idBuku}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                alert(result.message);
+                if (result.status === 'success') {
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Gagal menghapus buku.');
+            }
+        });
+    }
+</script>
 
 <?php 
 include 'layouts/footer.php'; 

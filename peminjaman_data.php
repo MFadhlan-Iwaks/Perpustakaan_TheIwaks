@@ -70,16 +70,21 @@ include 'layouts/header.php';
                                 <?php endif; ?>
                             </td>
                             <td style="vertical-align: middle;">
-                                <div style="display: flex; justify-content: center;">
+                                <div style="display: flex; justify-content: center; gap: 5px;">
                                     <?php if ($pinjam['status'] == 'dipinjam'): ?>
                                         <a href="#"
-                                            onclick="showModal('Konfirmasi pengembalian buku <?= addslashes($pinjam['judul']); ?> oleh <?= addslashes($pinjam['nama_lengkap']); ?>?', 'proses/kembali_proses.php?id_peminjaman=<?= $pinjam['id_peminjaman']; ?>&id_buku=<?= $pinjam['id_buku']; ?>'); return false;"
+                                            onclick="kembaliBuku(<?= $pinjam['id_peminjaman']; ?>, '<?= addslashes($pinjam['judul']); ?>', '<?= addslashes($pinjam['nama_lengkap']); ?>'); return false;"
                                             class="btn-primary"
                                             style="background: linear-gradient(135deg, #f59e0b, #d97706); font-size: 13px; padding: 6px 12px; border-radius: 6px; box-shadow: none;">Selesaikan</a>
                                     <?php else: ?>
                                         <span
                                             style="background: #f1f5f9; color: #94a3b8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-weight: 600;">Selesai</span>
                                     <?php endif; ?>
+                                    
+                                    <a href="#"
+                                        onclick="hapusPinjam(<?= $pinjam['id_peminjaman']; ?>, '<?= addslashes($pinjam['judul']); ?>', '<?= addslashes($pinjam['nama_lengkap']); ?>'); return false;"
+                                        class="btn-danger"
+                                        style="font-size: 13px; padding: 6px 12px; border-radius: 6px;">Hapus</a>
                                 </div>
                             </td>
                         </tr>
@@ -94,6 +99,50 @@ include 'layouts/header.php';
         </table>
     </div>
 </div>
+
+<script>
+    async function hapusPinjam(idPinjam, judul, peminjam) {
+        showModal(`Yakin ingin menghapus data peminjaman buku "${judul}" oleh "${peminjam}"? Stok akan dikembalikan jika buku belum dikembalikan.`, async () => {
+            try {
+                const response = await fetch(`api/peminjaman.php?id=${idPinjam}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                alert(result.message);
+                if (result.status === 'success') {
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Gagal menghapus peminjaman.');
+            }
+        });
+    }
+
+    async function kembaliBuku(idPinjam, judul, peminjam) {
+        showModal(`Konfirmasi pengembalian buku "${judul}" oleh "${peminjam}"?`, async () => {
+            try {
+                const response = await fetch('api/peminjaman.php?action=kembali', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_peminjaman: idPinjam })
+                });
+                const result = await response.json();
+                
+                let msg = result.message;
+                if (result.status === 'success' && result.data.denda > 0) {
+                    msg += `\nDenda keterlambatan: Rp ${result.data.denda.toLocaleString('id-ID')}`;
+                }
+                
+                alert(msg);
+                if (result.status === 'success') {
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Gagal memproses pengembalian.');
+            }
+        });
+    }
+</script>
 
 <?php
 include 'layouts/footer.php';
