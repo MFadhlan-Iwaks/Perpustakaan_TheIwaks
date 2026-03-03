@@ -7,117 +7,74 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'user') {
     exit();
 }
 
-$keyword = "";
-if (isset($_GET['search'])) {
-    $keyword = mysqli_real_escape_string($koneksi, $_GET['search']);
-    $query_katalog = mysqli_query($koneksi, "SELECT * FROM buku WHERE stok > 0 AND (judul LIKE '%$keyword%' OR penulis LIKE '%$keyword%' OR kategori LIKE '%$keyword%') ORDER BY id_buku DESC");
-} else {
-    $query_katalog = mysqli_query($koneksi, "SELECT * FROM buku WHERE stok > 0 ORDER BY id_buku DESC");
-}
-
 include 'layouts/header.php';
 ?>
 
-<div class="card-container">
-    <h3 class="header-title">Katalog Buku Tersedia</h3>
+<div class="main-content">
+    <div style="margin-bottom: 25px;">
+        <h2 style="font-size: 24px; color: #1e293b; margin: 0;">📚 Katalog Buku Perpustakaan</h2>
+        <p style="color: #64748b; margin-top: 5px;">Silahkan pilih buku yang ingin Anda pinjam (Maks 3 buku).</p>
+    </div>
 
-    <form action="user_dashboard.php" method="GET"
-        style="margin-bottom: 30px; display: flex; gap: 10px; max-width: 600px;">
-        <input type="text" name="search" value="<?= htmlspecialchars($keyword); ?>"
-            placeholder="Cari judul buku, penulis, atau kategori..."
-            style="flex: 1; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: 0.3s;"
-            onfocus="this.style.borderColor='#4f46e5'" onblur="this.style.borderColor='#cbd5e1'">
-
-        <button type="submit" class="btn-primary"
-            style="padding: 12px 24px; border-radius: 8px; font-size: 15px; cursor: pointer; border: none;">Cari</button>
-
-        <?php if ($keyword != ""): ?>
-            <a href="user_dashboard.php"
-                style="padding: 12px 20px; border-radius: 8px; font-size: 15px; text-decoration: none; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #475569; font-weight: 600; border: 1px solid #e2e8f0;">Reset</a>
-        <?php endif; ?>
-    </form>
-
-    <?php if (isset($_SESSION['pesan'])): ?>
-        <?php
-        $tipe = isset($_SESSION['tipe_pesan']) ? $_SESSION['tipe_pesan'] : 'success';
-        $bg = ($tipe == 'error') ? '#fef2f2' : '#dcfce7';
-        $color = ($tipe == 'error') ? '#991b1b' : '#166534';
-        $border = ($tipe == 'error') ? '#ef4444' : '#22c55e';
-        $icon = ($tipe == 'error') ? '❌' : '✅';
-        ?>
-        <div
-            style="background: <?= $bg; ?>; color: <?= $color; ?>; padding: 12px 20px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid <?= $border; ?>; font-weight: 500;">
-            <?= $icon; ?>     <?= $_SESSION['pesan'];
-                   unset($_SESSION['pesan']);
-                   unset($_SESSION['tipe_pesan']); ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (mysqli_num_rows($query_katalog) == 0 && $keyword != ""): ?>
-        <div
-            style="text-align: center; padding: 50px 20px; color: #64748b; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
-            <div style="font-size: 40px; margin-bottom: 10px;">📚❓</div>
-            <h4 style="color: #334155; margin-bottom: 5px;">Buku tidak ditemukan</h4>
-            <p>Tidak ada buku yang cocok dengan kata kunci "<strong><?= htmlspecialchars($keyword); ?></strong>".</p>
-        </div>
-    <?php endif; ?>
-
-    <div class="grid-buku">
-        <?php while ($buku = mysqli_fetch_assoc($query_katalog)): ?>
-            <div class="card-buku">
-                <?php if ($buku['gambar']): ?>
-                    <img src="assets/images/buku/<?= $buku['gambar']; ?>" alt="Cover <?= $buku['judul']; ?>">
-                <?php else: ?>
-                    <div
-                        style="height: 200px; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; border-radius: 12px; color: #94a3b8;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                        </svg>
-                        <span style="margin-top: 10px; font-weight: 500; font-size: 14px;">No Cover</span>
-                    </div>
-                <?php endif; ?>
-
-                <h4><?= $buku['judul']; ?></h4>
-                <p class="penulis"><?= $buku['penulis']; ?></p>
-                <p
-                    style="font-size: 12px; color: #64748b; margin-bottom: 15px; margin-top: -10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                    <?= $buku['kategori']; ?></p>
-
-                <div class="card-footer-info">
-                    <span class="stok-badge">Stok: <?= $buku['stok']; ?></span>
-
-                    <a href="#"
-                        onclick="pinjamBuku(<?= $buku['id_buku']; ?>, '<?= addslashes($buku['judul']); ?>'); return false;"
-                        class="btn-pinjam">Pinjam Buku</a>
-                </div>
-            </div>
-        <?php endwhile; ?>
+    <div id="book-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+        <!-- Data buku akan diisi via API -->
+        <p style="text-align: center; grid-column: 1/-1;">Memuat katalog...</p>
     </div>
 </div>
 
 <script>
-    const currentUserId = <?= $_SESSION['id_user']; ?>;
-    
-    async function pinjamBuku(idBuku, judul) {
-        showModal(`Pinjam buku "${judul}" ini selama 7 hari?`, async () => {
+    async function loadBooks() {
+        try {
+            const response = await fetch('api/buku.php');
+            const result = await response.json();
+            const grid = document.getElementById('book-grid');
+            grid.innerHTML = '';
+
+            if (result.status === 'success') {
+                result.data.forEach(b => {
+                    const img = b.gambar ? `assets/images/buku/${b.gambar}` : 'https://via.placeholder.com/150x200?text=No+Cover';
+                    const card = `
+                        <div class="card-container" style="display: flex; gap: 15px; align-items: flex-start; transition: transform 0.2s;">
+                            <img src="${img}" style="width: 100px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 16px; color: #1e293b;">${b.judul}</h4>
+                                <p style="font-size: 12px; color: #64748b; margin: 0 0 10px 0;">Oleh: ${b.penulis}</p>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <span style="font-size: 11px; background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">${b.kategori}</span>
+                                    <span style="font-size: 12px; font-weight: bold; color: ${b.stok > 0 ? '#10b981' : '#ef4444'}">Stok: ${b.stok}</span>
+                                </div>
+                                ${b.stok > 0 
+                                    ? `<button onclick="pinjamBuku(${b.id_buku})" class="btn-primary" style="width: 100%; font-size: 12px; padding: 8px;">Pinjam Buku</button>`
+                                    : `<button disabled class="btn-primary" style="width: 100%; font-size: 12px; padding: 8px; background: #cbd5e1; cursor: not-allowed;">Stok Habis</button>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                    grid.innerHTML += card;
+                });
+            }
+        } catch (error) { grid.innerHTML = 'Gagal memuat katalog.'; }
+    }
+
+    async function pinjamBuku(idBuku) {
+        if (confirm('Konfirmasi peminjaman buku ini?')) {
             try {
-                const response = await fetch('api/peminjaman.php?action=pinjam', {
+                const response = await fetch('api/peminjaman.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_user: currentUserId, id_buku: idBuku })
+                    body: JSON.stringify({
+                        id_user: <?= $_SESSION['id_user']; ?>,
+                        id_buku: idBuku
+                    })
                 });
                 const result = await response.json();
                 alert(result.message);
-                if (result.status === 'success') {
-                    location.reload();
-                }
-            } catch (error) {
-                alert('Gagal memproses peminjaman.');
-            }
-        });
+                if (result.status === 'success') loadBooks();
+            } catch (error) { alert('Gagal memproses peminjaman.'); }
+        }
     }
+
+    document.addEventListener('DOMContentLoaded', loadBooks);
 </script>
 
 <?php include 'layouts/footer.php'; ?>

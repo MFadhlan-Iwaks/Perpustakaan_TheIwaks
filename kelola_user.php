@@ -7,26 +7,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'petugas') {
     exit();
 }
 
-$query_users = mysqli_query($koneksi, "SELECT * FROM users ORDER BY role ASC, nama_lengkap ASC");
-
 include 'layouts/header.php';
 ?>
 
 <div class="main-content">
     <div class="card-container">
-
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h3 class="header-title" style="margin-bottom: 0; border: none; padding: 0;">👥 Kelola Pengguna</h3>
+            <h3 class="header-title" style="margin-bottom: 0; border: none; padding: 0;">👥 Kelola Pengguna (via API)</h3>
             <a href="user_tambah.php" class="btn-primary">+ Tambah Pengguna</a>
         </div>
-
-        <?php if (isset($_SESSION['pesan'])): ?>
-            <div
-                style="background: #dcfce7; color: #166534; padding: 12px 20px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #22c55e;">
-                ✅ <?= $_SESSION['pesan'];
-                unset($_SESSION['pesan']); ?>
-            </div>
-        <?php endif; ?>
 
         <div class="table-responsive">
             <table>
@@ -39,47 +28,62 @@ include 'layouts/header.php';
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php $no = 1;
-                    while ($u = mysqli_fetch_assoc($query_users)): ?>
-                        <tr>
-                            <td><?= $no++; ?></td>
-                            <td><strong><?= $u['nama_lengkap']; ?></strong></td>
-                            <td><?= $u['username']; ?></td>
-                            <td>
-                                    <?php if ($u['role'] == 'petugas'): ?>
-                                    <span
-                                        style="background: #e0e7ff; color: #4338ca; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">🛡️
-                                        Petugas</span>
-                                    <?php else: ?>
-                                    <span
-                                        style="background: #f1f5f9; color: #475569; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">👤
-                                        User</span>
-                                    <?php endif; ?>
-                            </td>
-                            <td>
-                                    <?php if ($u['id_user'] != $_SESSION['id_user']): ?>
-                                    <div style="display: flex; gap: 5px;">
-                                        <a href="user_edit.php?id=<?= $u['id_user']; ?>" class="btn-primary" style="background: #0ea5e9; font-size: 12px; padding: 6px 12px; border-radius: 6px;">Edit</a>
-                                        <a href="#" class="btn-danger" style="font-size: 12px; padding: 6px 12px; border-radius: 6px;"
-                                            onclick="hapusUser(<?= $u['id_user']; ?>, '<?= addslashes($u['nama_lengkap']); ?>'); return false;">Hapus</a>
-                                    </div>
-                                    <?php else: ?>
-                                    <span style="font-size: 12px; color: #94a3b8; font-style: italic;">Sedang Login</span>
-                                    <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
+                <tbody id="user-table-body">
+                    <!-- Data akan diisi oleh JavaScript dari API -->
+                    <tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr>
                 </tbody>
             </table>
         </div>
-
     </div>
 </div>
 
 <script>
+    // FUNGSI READ (GET) VIA API
+    async function loadUsers() {
+        try {
+            const response = await fetch('api/user.php');
+            const result = await response.json();
+            
+            const tableBody = document.getElementById('user-table-body');
+            tableBody.innerHTML = ''; // Kosongkan tabel
+            
+            if (result.status === 'success') {
+                result.data.forEach((user, index) => {
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><strong>${user.nama_lengkap}</strong></td>
+                            <td>${user.username}</td>
+                            <td>
+                                <span style="background: ${user.role === 'petugas' ? '#e0e7ff' : '#f1f5f9'}; 
+                                             color: ${user.role === 'petugas' ? '#4338ca' : '#475569'}; 
+                                             padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                                    ${user.role === 'petugas' ? '🛡️ Petugas' : '👤 User'}
+                                </span>
+                            </td>
+                            <td>
+                                ${user.id_user != <?= $_SESSION['id_user']; ?> ? `
+                                    <div style="display: flex; gap: 5px;">
+                                        <a href="user_edit.php?id=${user.id_user}" class="btn-primary" style="background: #0ea5e9; font-size: 12px; padding: 6px 12px; border-radius: 6px;">Edit</a>
+                                        <a href="#" class="btn-danger" style="font-size: 12px; padding: 6px 12px; border-radius: 6px;"
+                                           onclick="hapusUser(${user.id_user}, '${user.nama_lengkap}'); return false;">Hapus</a>
+                                    </div>
+                                ` : '<span style="font-size: 12px; color: #94a3b8; font-style: italic;">Sedang Login</span>'}
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            }
+        } catch (error) {
+            console.error('Gagal mengambil data:', error);
+            document.getElementById('user-table-body').innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Gagal memuat data dari API.</td></tr>';
+        }
+    }
+
+    // FUNGSI DELETE VIA API
     async function hapusUser(idUser, nama) {
-        showModal(`Yakin ingin menghapus pengguna "${nama}" dari database?`, async () => {
+        if (confirm(`Yakin ingin menghapus pengguna "${nama}"?`)) {
             try {
                 const response = await fetch(`api/user.php?id=${idUser}`, {
                     method: 'DELETE'
@@ -87,13 +91,16 @@ include 'layouts/header.php';
                 const result = await response.json();
                 alert(result.message);
                 if (result.status === 'success') {
-                    location.reload();
+                    loadUsers(); // Refresh tabel setelah hapus
                 }
             } catch (error) {
                 alert('Gagal menghapus pengguna.');
             }
-        });
+        }
     }
+
+    // Jalankan loadUsers saat halaman selesai dimuat
+    document.addEventListener('DOMContentLoaded', loadUsers);
 </script>
 
 <?php include 'layouts/footer.php'; ?>

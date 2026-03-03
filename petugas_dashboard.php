@@ -7,80 +7,112 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'petugas') {
     exit();
 }
 
-$query_buku = mysqli_query($koneksi, "SELECT * FROM buku ORDER BY id_buku DESC");
-
-include 'layouts/header.php'; 
+include 'layouts/header.php';
 ?>
 
-<div class="card-container">
-    <h3 class="header-title">Daftar Buku Perpustakaan</h3>
-    
-    <div style="overflow-x: auto;">
-        <table style="width: 100%; min-width: 800px;">
-            <thead>
-                <tr>
-                    <th style="width: 12%; text-align: center;">Cover</th>
-                    <th style="width: 33%;">Judul & Info</th>
-                    <th style="width: 20%;">Penulis</th>
-                    <th style="width: 15%;">Stok & Rak</th>
-                    <th style="width: 20%; text-align: center;">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($row = mysqli_fetch_assoc($query_buku)) : ?>
-                <tr>
-                    <td style="text-align: center; vertical-align: middle;">
-                        <?php if ($row['gambar']) : ?>
-                            <img src="assets/images/buku/<?= $row['gambar']; ?>" class="img-cover" alt="Cover" style="margin: 0 auto; display: block;">
-                        <?php else : ?>
-                            <span style="font-size: 12px; color: #94a3b8; font-style: italic;">No Image</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="vertical-align: middle;">
-                        <strong style="font-size: 15px; color: #0f172a;"><?= $row['judul']; ?></strong><br>
-                        <small style="color: #64748b;"><?= $row['kategori']; ?> | ISBN: <?= $row['isbn'] ? $row['isbn'] : '-'; ?></small><br>
-                        <small style="color: #64748b;"><?= $row['penerbit']; ?> (<?= $row['tahun_terbit']; ?>)</small>
-                    </td>
-                    <td style="color: #334155; font-weight: 500; vertical-align: middle;">
-                        <?= $row['penulis']; ?>
-                    </td>
-                    <td style="vertical-align: middle;">
-                        <span style="background: #e0f2fe; color: #0284c7; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">Stok: <?= $row['stok']; ?></span><br>
-                        <small style="color: #059669; font-weight: 600; display: inline-block; margin-top: 6px;">📍 <?= $row['lokasi_rak']; ?></small>
-                    </td>
-                    <td style="vertical-align: middle;">
-                        <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
-                            <a href="buku_edit.php?id=<?= $row['id_buku']; ?>" class="btn-primary" style="background: #0ea5e9; font-size: 13px; padding: 0 16px; height: 34px; display: inline-flex; align-items: center; justify-content: center; box-shadow: none; border-radius: 6px;">Edit</a>
-                            
-                            <a href="#" onclick="hapusBuku(<?= $row['id_buku']; ?>, '<?= addslashes($row['judul']); ?>'); return false;" class="btn-danger" style="font-size: 13px; padding: 0 16px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;">Hapus</a>
-                        </div>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+<div class="main-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h2 style="font-size: 24px; color: #1e293b; margin: 0;">👋 Halo, <?= $_SESSION['username']; ?>!</h2>
+        <a href="buku_tambah.php" class="btn-primary" style="padding: 10px 20px;">+ Tambah Buku Baru</a>
+    </div>
+
+    <!-- Statistik Sederhana -->
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <div class="card-container" style="text-align: center; border-left: 5px solid #3b82f6;">
+            <p style="color: #64748b; font-size: 14px;">Total Buku</p>
+            <h3 id="stat-buku" style="font-size: 28px; margin: 5px 0;">...</h3>
+        </div>
+        <div class="card-container" style="text-align: center; border-left: 5px solid #10b981;">
+            <p style="color: #64748b; font-size: 14px;">Peminjaman Aktif</p>
+            <h3 id="stat-pinjam" style="font-size: 28px; margin: 5px 0;">...</h3>
+        </div>
+    </div>
+
+    <div class="card-container">
+        <h3 class="header-title" style="margin-bottom: 20px;">📚 Kelola Katalog Buku (via API)</h3>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Sampul</th>
+                        <th>Info Buku</th>
+                        <th>Kategori</th>
+                        <th>Stok</th>
+                        <th>Lokasi</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="buku-table-body">
+                    <tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    async function hapusBuku(idBuku, judul) {
-        showModal(`Yakin ingin menghapus buku "${judul}" dari database?`, async () => {
-            try {
-                const response = await fetch(`api/buku.php?id=${idBuku}`, {
-                    method: 'DELETE'
-                });
-                const result = await response.json();
-                alert(result.message);
-                if (result.status === 'success') {
-                    location.reload();
-                }
-            } catch (error) {
-                alert('Gagal menghapus buku.');
+    async function loadDashboardData() {
+        try {
+            // Load Books
+            const resBuku = await fetch('api/buku.php');
+            const dataBuku = await resBuku.json();
+            
+            // Load Loans
+            const resPinjam = await fetch('api/peminjaman.php');
+            const dataPinjam = await resPinjam.json();
+
+            // Update Stats
+            if (dataBuku.status === 'success') document.getElementById('stat-buku').innerText = dataBuku.data.length;
+            if (dataPinjam.status === 'success') {
+                const aktif = dataPinjam.data.filter(p => p.status === 'dipinjam').length;
+                document.getElementById('stat-pinjam').innerText = aktif;
             }
-        });
+
+            // Render Table
+            const tableBody = document.getElementById('buku-table-body');
+            tableBody.innerHTML = '';
+            
+            if (dataBuku.status === 'success') {
+                dataBuku.data.forEach((b, index) => {
+                    const img = b.gambar ? `assets/images/buku/${b.gambar}` : 'https://via.placeholder.com/50x70?text=No+Cover';
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><img src="${img}" style="width: 50px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></td>
+                            <td>
+                                <strong>${b.judul}</strong><br>
+                                <span style="font-size: 11px; color: #64748b;">${b.penulis} | ISBN: ${b.isbn}</span>
+                            </td>
+                            <td><span style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 11px;">${b.kategori}</span></td>
+                            <td><b style="color: ${b.stok > 0 ? '#10b981' : '#ef4444'}">${b.stok}</b></td>
+                            <td>${b.lokasi_rak}</td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <a href="buku_edit.php?id=${b.id_buku}" class="btn-primary" style="background: #0ea5e9; font-size: 11px; padding: 5px 10px;">Edit</a>
+                                    <button onclick="hapusBuku(${b.id_buku}, '${b.judul.replace(/'/g, "\\'")}')" class="btn-danger" style="font-size: 11px; padding: 5px 10px;">Hapus</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            }
+        } catch (error) { console.error('Error load dashboard:', error); }
     }
+
+    async function hapusBuku(id, judul) {
+        if (confirm(`Yakin ingin menghapus buku "${judul}"?`)) {
+            try {
+                const res = await fetch(`api/buku.php?id=${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                alert(result.message);
+                loadDashboardData();
+            } catch (error) { alert('Gagal menghapus.'); }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDashboardData);
 </script>
 
-<?php 
-include 'layouts/footer.php'; 
-?>
+<?php include 'layouts/footer.php'; ?>

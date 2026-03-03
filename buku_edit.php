@@ -7,138 +7,80 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'petugas') {
     exit();
 }
 
-if (!isset($_GET['id'])) {
-    header("Location: petugas_dashboard.php");
-    exit();
-}
-
-$id_buku = $_GET['id'];
-$query = mysqli_query($koneksi, "SELECT * FROM buku WHERE id_buku = '$id_buku'");
-$buku = mysqli_fetch_assoc($query);
-
-if (!$buku) {
-    header("Location: petugas_dashboard.php");
-    exit();
-}
-
+$id_buku = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 include 'layouts/header.php';
 ?>
 
-<div class="card-container" style="max-width: 700px; margin: 0 auto;">
-    <h3 class="header-title">Edit Data Buku</h3>
-
-    <form id="editBukuForm" enctype="multipart/form-data">
-        <input type="hidden" name="id_buku" value="<?= $buku['id_buku']; ?>">
-
-        <div style="margin-bottom: 15px;">
-            <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Judul Buku</label>
-            <input type="text" name="judul" value="<?= $buku['judul']; ?>" required
-                style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
-        </div>
-
-        <div style="margin-bottom: 15px; display: flex; gap: 15px;">
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">ISBN</label>
-                <input type="text" name="isbn" value="<?= $buku['isbn']; ?>"
-                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+<div class="main-content">
+    <div class="card-container">
+        <h3 class="header-title">✏️ Edit Buku (via API PUT)</h3>
+        <form id="form-edit-buku">
+            <input type="hidden" name="id_buku" value="<?= $id_buku; ?>">
+            <div style="margin-bottom: 15px;">
+                <label>Judul Buku</label>
+                <input type="text" name="judul" id="judul" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;">
             </div>
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Kategori</label>
-                <input type="text" name="kategori" value="<?= $buku['kategori']; ?>" required
-                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div><label>ISBN</label><input type="text" name="isbn" id="isbn" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;"></div>
+                <div><label>Kategori</label><input type="text" name="kategori" id="kategori" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;"></div>
             </div>
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Lokasi Rak</label>
-                <input type="text" name="lokasi_rak" value="<?= $buku['lokasi_rak']; ?>" required
-                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div><label>Penulis</label><input type="text" name="penulis" id="penulis" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;"></div>
+                <div><label>Penerbit</label><input type="text" name="penerbit" id="penerbit" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;"></div>
             </div>
-        </div>
-
-        <div style="margin-bottom: 15px; display: flex; gap: 15px;">
-            <div style="flex: 2;">
-                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Penulis</label>
-                <input type="text" name="penulis" value="<?= $buku['penulis']; ?>" required
-                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div><label>Tahun Terbit</label><input type="number" name="tahun_terbit" id="tahun_terbit" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;"></div>
+                <div><label>Stok</label><input type="number" name="stok" id="stok" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;"></div>
             </div>
-            <div style="flex: 2;">
-                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Penerbit</label>
-                <input type="text" name="penerbit" value="<?= $buku['penerbit']; ?>" required
-                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div style="margin-bottom: 15px;">
+                <label>Lokasi Rak</label>
+                <input type="text" name="lokasi_rak" id="lokasi_rak" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;">
             </div>
-        </div>
-
-        <div style="margin-bottom: 15px; display: flex; gap: 15px;">
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Tahun Terbit</label>
-                <input type="number" name="tahun_terbit" value="<?= $buku['tahun_terbit']; ?>" required
-                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
-            </div>
-            <div style="flex: 1;">
-                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Jumlah Stok</label>
-                <input type="number" name="stok" value="<?= $buku['stok']; ?>" required
-                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
-            </div>
-        </div>
-
-        <div style="margin-bottom: 25px;">
-            <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Ganti Cover (Biarkan kosong
-                jika tidak ingin ganti)</label>
-            <input type="file" name="gambar" accept="image/jpeg, image/png, image/jpg"
-                style="width: 100%; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc;">
-            <?php if ($buku['gambar']): ?>
-                <div style="margin-top: 10px; font-size: 13px; color: #64748b; display: flex; align-items: center;">
-                    Cover saat ini: <img src="assets/images/buku/<?= $buku['gambar']; ?>"
-                        style="height: 50px; border-radius: 4px; margin-left: 10px; border: 1px solid #ccc;">
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <div id="api-message" style="margin-bottom: 15px; font-size: 14px; text-align: center;"></div>
-
-        <button type="submit" class="btn-primary" style="width: 100%;">Update Data Buku</button>
-    </form>
+            <button type="submit" class="btn-primary" style="width: 100%;">Update Data via API PUT</button>
+            <a href="petugas_dashboard.php" style="display: block; text-align: center; margin-top: 15px; color: #64748b;">Kembali</a>
+        </form>
+    </div>
 </div>
 
 <script>
-    document.getElementById('editBukuForm').addEventListener('submit', async function(e) {
+    const idBuku = <?= $id_buku; ?>;
+
+    async function loadBukuDetail() {
+        try {
+            const response = await fetch(`api/buku.php?id=${idBuku}`);
+            const result = await response.json();
+            if (result.status === 'success') {
+                const b = result.data;
+                document.getElementById('judul').value = b.judul;
+                document.getElementById('isbn').value = b.isbn;
+                document.getElementById('kategori').value = b.kategori;
+                document.getElementById('penulis').value = b.penulis;
+                document.getElementById('penerbit').value = b.penerbit;
+                document.getElementById('tahun_terbit').value = b.tahun_terbit;
+                document.getElementById('stok').value = b.stok;
+                document.getElementById('lokasi_rak').value = b.lokasi_rak;
+            } else { alert('Buku tidak ditemukan'); window.location.href='petugas_dashboard.php'; }
+        } catch (error) { alert('Gagal memuat detail buku.'); }
+    }
+
+    document.getElementById('form-edit-buku').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
         const formData = new FormData(this);
-        const messageDiv = document.getElementById('api-message');
-        const submitBtn = this.querySelector('button[type="submit"]');
-        
-        messageDiv.textContent = 'Memperbarui...';
-        messageDiv.style.color = '#475569';
-        submitBtn.disabled = true;
+        const data = Object.fromEntries(formData.entries());
 
         try {
-            const response = await fetch('api/buku.php', {
-                method: 'POST',
-                body: formData
+            const response = await fetch(`api/buku.php?id=${idBuku}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             });
-
             const result = await response.json();
-
-            if (result.status === 'success') {
-                messageDiv.textContent = 'Buku berhasil diperbarui!';
-                messageDiv.style.color = '#166534';
-                
-                setTimeout(() => {
-                    window.location.href = 'petugas_dashboard.php';
-                }, 1500);
-            } else {
-                messageDiv.textContent = result.message;
-                messageDiv.style.color = '#991b1b';
-                submitBtn.disabled = false;
-            }
-        } catch (error) {
-            messageDiv.textContent = 'Terjadi kesalahan pada server.';
-            messageDiv.style.color = '#991b1b';
-            submitBtn.disabled = false;
-            console.error('Error:', error);
-        }
+            alert(result.message);
+            if (result.status === 'success') window.location.href = 'petugas_dashboard.php';
+        } catch (error) { alert('Gagal mengupdate buku.'); }
     });
+
+    document.addEventListener('DOMContentLoaded', loadBukuDetail);
 </script>
-</div>
 
 <?php include 'layouts/footer.php'; ?>
