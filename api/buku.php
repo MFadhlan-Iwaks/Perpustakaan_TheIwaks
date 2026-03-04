@@ -6,10 +6,8 @@ require_once 'response.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $id_buku = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
-// KEAMANAN: Semua aksi API Buku butuh login
 cekAksesAPI(); 
 
-// KEAMANAN TAMBAHAN: POST, PUT, DELETE hanya untuk Petugas
 if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
     cekAksesAPI('petugas');
 }
@@ -29,7 +27,7 @@ switch ($method) {
         }
         break;
 
-    case 'POST': // CREATE
+    case 'POST': 
         $judul        = isset($_POST['judul']) ? mysqli_real_escape_string($koneksi, $_POST['judul']) : '';
         $isbn         = isset($_POST['isbn']) ? mysqli_real_escape_string($koneksi, $_POST['isbn']) : '';
         $kategori     = isset($_POST['kategori']) ? mysqli_real_escape_string($koneksi, $_POST['kategori']) : '';
@@ -51,7 +49,7 @@ switch ($method) {
         else sendError("Gagal menambahkan buku", 500);
         break;
 
-    case 'PUT': // UPDATE (Data Teks)
+    case 'PUT': 
         if (!$id_buku) sendError("ID diperlukan");
         $data = json_decode(file_get_contents("php://input"), true);
         $judul = mysqli_real_escape_string($koneksi, $data['judul']);

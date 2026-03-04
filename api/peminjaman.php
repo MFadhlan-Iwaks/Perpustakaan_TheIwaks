@@ -6,7 +6,6 @@ require_once 'response.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $id_peminjaman = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
-// KEAMANAN: Semua aksi API Peminjaman wajib Login
 cekAksesAPI(); 
 
 switch ($method) {
@@ -28,7 +27,7 @@ switch ($method) {
         }
         break;
 
-    case 'POST': // CREATE
+    case 'POST': 
         $data = json_decode(file_get_contents("php://input"), true);
         $id_user = (int)$data['id_user'];
         $id_buku = (int)$data['id_buku'];
@@ -42,19 +41,17 @@ switch ($method) {
         } else sendError("Gagal memproses pinjam", 500);
         break;
 
-    case 'PUT': // UPDATE / KEMBALI
+    case 'PUT': 
         if (!$id_peminjaman) sendError("ID diperlukan");
         $data = json_decode(file_get_contents("php://input"), true);
 
         if ($data) {
-            // Update manual (hanya petugas)
             cekAksesAPI('petugas');
             $status = mysqli_real_escape_string($koneksi, $data['status']);
             $query = "UPDATE peminjaman SET status='$status', denda=" . (int)$data['denda'] . " WHERE id_peminjaman=$id_peminjaman";
             if (mysqli_query($koneksi, $query)) sendSuccess("Data diperbarui");
             else sendError("Gagal update");
         } else {
-            // Kembali otomatis
             $q = mysqli_query($koneksi, "SELECT * FROM peminjaman WHERE id_peminjaman=$id_peminjaman");
             $p = mysqli_fetch_assoc($q);
             if (!$p || $p['status'] == 'dikembalikan') sendError("Data tidak valid");

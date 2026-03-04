@@ -1,9 +1,8 @@
 <?php
-require_once 'middleware.php'; // Hubungkan ke middleware
+require_once 'middleware.php'; 
 require_once '../config/koneksi.php';
 require_once 'response.php';
 
-// CEK AKSES: Hanya petugas yang boleh akses API Kelola User
 cekAksesAPI('petugas'); 
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -24,7 +23,7 @@ switch ($method) {
         }
         break;
 
-    case 'POST': // CREATE
+    case 'POST': 
         $data = json_decode(file_get_contents("php://input"), true);
         if (!isset($data['username']) || !isset($data['nama_lengkap']) || !isset($data['role']) || empty($data['password'])) {
             sendError("Data user tidak lengkap");
@@ -42,7 +41,7 @@ switch ($method) {
         else sendError("Gagal menambahkan user", 500);
         break;
 
-    case 'PUT': // UPDATE
+    case 'PUT':
         if (!$id_user) sendError("ID user diperlukan");
         $data = json_decode(file_get_contents("php://input"), true);
         $username = mysqli_real_escape_string($koneksi, $data['username']);
