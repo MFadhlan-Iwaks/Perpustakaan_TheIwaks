@@ -13,7 +13,7 @@ include 'layouts/header.php';
 
 <div class="main-content">
     <div class="card-container">
-        <h3 class="header-title">✏️ Edit Buku (via API PUT)</h3>
+        <h3 class="header-title">✏️ Edit Buku</h3>
         <form id="form-edit-buku">
             <input type="hidden" name="id_buku" value="<?= $id_buku; ?>">
             <div style="margin-bottom: 15px;">
@@ -36,7 +36,7 @@ include 'layouts/header.php';
                 <label>Lokasi Rak</label>
                 <input type="text" name="lokasi_rak" id="lokasi_rak" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;">
             </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Update Data via API PUT</button>
+            <button type="submit" class="btn-primary" style="width: 100%;">Update Data</button>
             <a href="petugas_dashboard.php" style="display: block; text-align: center; margin-top: 15px; color: #64748b;">Kembali</a>
         </form>
     </div>

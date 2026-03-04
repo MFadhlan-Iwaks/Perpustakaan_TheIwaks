@@ -10,14 +10,13 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'petugas') {
 $id_peminjaman = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 include 'layouts/header.php';
 
-// Ambil list User & Buku untuk Dropdown
 $users = mysqli_query($koneksi, "SELECT id_user, nama_lengkap FROM users WHERE role = 'user'");
 $books = mysqli_query($koneksi, "SELECT id_buku, judul FROM buku");
 ?>
 
 <div class="main-content">
     <div class="card-container">
-        <h3 class="header-title">✏️ Edit Transaksi Peminjaman (via API PUT)</h3>
+        <h3 class="header-title">✏️ Edit Transaksi Peminjaman</h3>
         <form id="form-edit-pinjam">
             <div style="margin-bottom: 15px;">
                 <label>Peminjam</label>
@@ -48,7 +47,7 @@ $books = mysqli_query($koneksi, "SELECT id_buku, judul FROM buku");
                 </div>
                 <div><label>Denda (Rp)</label><input type="number" name="denda" id="denda" class="form-control" value="0" style="width:100%; padding:8px; margin-top:5px;"></div>
             </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Update Transaksi via API PUT</button>
+            <button type="submit" class="btn-primary" style="width: 100%;">Update Transaksi</button>
             <a href="peminjaman_data.php" style="display: block; text-align: center; margin-top: 15px; color: #64748b;">Kembali</a>
         </form>
     </div>

@@ -13,7 +13,7 @@ include 'layouts/header.php';
 
 <div class="main-content">
     <div class="card-container">
-        <h3 class="header-title">✏️ Edit Pengguna (via API PUT)</h3>
+        <h3 class="header-title">✏️ Edit Pengguna</h3>
 
         <form id="form-edit-user">
             <input type="hidden" name="id_user" value="<?= $id_user; ?>">
@@ -36,7 +36,7 @@ include 'layouts/header.php';
                     <option value="petugas">Petugas</option>
                 </select>
             </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Update via API PUT</button>
+            <button type="submit" class="btn-primary" style="width: 100%;">Update</button>
             <a href="kelola_user.php" style="display: block; text-align: center; margin-top: 15px; color: #64748b;">Kembali</a>
         </form>
     </div>
@@ -45,7 +45,6 @@ include 'layouts/header.php';
 <script>
     const idUser = <?= $id_user; ?>;
 
-    // FUNGSI LOAD DATA DETAIL (GET BY ID)
     async function loadUserDetail() {
         try {
             const response = await fetch(`api/user.php?id=${idUser}`);
@@ -65,7 +64,6 @@ include 'layouts/header.php';
         }
     }
 
-    // FUNGSI UPDATE (PUT) VIA API
     document.getElementById('form-edit-user').addEventListener('submit', async function(e) {
         e.preventDefault();
         

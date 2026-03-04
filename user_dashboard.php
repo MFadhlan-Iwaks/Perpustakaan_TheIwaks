@@ -17,7 +17,6 @@ include 'layouts/header.php';
     </div>
 
     <div id="book-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-        <!-- Data buku akan diisi via API -->
         <p style="text-align: center; grid-column: 1/-1;">Memuat katalog...</p>
     </div>
 </div>
@@ -43,10 +42,10 @@ include 'layouts/header.php';
                                     <span style="font-size: 11px; background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">${b.kategori}</span>
                                     <span style="font-size: 12px; font-weight: bold; color: ${b.stok > 0 ? '#10b981' : '#ef4444'}">Stok: ${b.stok}</span>
                                 </div>
-                                ${b.stok > 0 
-                                    ? `<button onclick="pinjamBuku(${b.id_buku})" class="btn-primary" style="width: 100%; font-size: 12px; padding: 8px;">Pinjam Buku</button>`
-                                    : `<button disabled class="btn-primary" style="width: 100%; font-size: 12px; padding: 8px; background: #cbd5e1; cursor: not-allowed;">Stok Habis</button>`
-                                }
+                                ${b.stok > 0
+                            ? `<button onclick="pinjamBuku(${b.id_buku})" class="btn-primary" style="width: 100%; font-size: 12px; padding: 8px;">Pinjam Buku</button>`
+                            : `<button disabled class="btn-primary" style="width: 100%; font-size: 12px; padding: 8px; background: #cbd5e1; cursor: not-allowed;">Stok Habis</button>`
+                        }
                             </div>
                         </div>
                     `;

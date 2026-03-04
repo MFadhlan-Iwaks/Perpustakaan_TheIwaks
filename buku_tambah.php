@@ -12,7 +12,7 @@ include 'layouts/header.php';
 
 <div class="main-content">
     <div class="card-container">
-        <h3 class="header-title">➕ Tambah Buku Baru (via API POST)</h3>
+        <h3 class="header-title">➕ Tambah Buku Baru</h3>
         <form id="form-tambah-buku" enctype="multipart/form-data">
             <div style="margin-bottom: 15px;">
                 <label>Judul Buku</label>
@@ -38,7 +38,7 @@ include 'layouts/header.php';
                 <label>Gambar Sampul</label>
                 <input type="file" name="gambar" class="form-control" accept="image/*" style="width: 100%; padding: 8px; margin-top: 5px;">
             </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Simpan via API POST</button>
+            <button type="submit" class="btn-primary" style="width: 100%;">Simpan</button>
             <a href="petugas_dashboard.php" style="display: block; text-align: center; margin-top: 15px; color: #64748b;">Kembali</a>
         </form>
     </div>
@@ -52,7 +52,7 @@ include 'layouts/header.php';
         try {
             const response = await fetch('api/buku.php', {
                 method: 'POST',
-                body: formData // Menggunakan FormData untuk dukungan upload file
+                body: formData 
             });
             const result = await response.json();
             alert(result.message);

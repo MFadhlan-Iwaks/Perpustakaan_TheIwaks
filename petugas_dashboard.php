@@ -16,7 +16,6 @@ include 'layouts/header.php';
         <a href="buku_tambah.php" class="btn-primary" style="padding: 10px 20px;">+ Tambah Buku Baru</a>
     </div>
 
-    <!-- Statistik Sederhana -->
     <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
         <div class="card-container" style="text-align: center; border-left: 5px solid #3b82f6;">
             <p style="color: #64748b; font-size: 14px;">Total Buku</p>
@@ -29,7 +28,7 @@ include 'layouts/header.php';
     </div>
 
     <div class="card-container">
-        <h3 class="header-title" style="margin-bottom: 20px;">📚 Kelola Katalog Buku (via API)</h3>
+        <h3 class="header-title" style="margin-bottom: 20px;">📚 Kelola Katalog Buku </h3>
         <div class="table-responsive">
             <table>
                 <thead>
@@ -54,22 +53,18 @@ include 'layouts/header.php';
 <script>
     async function loadDashboardData() {
         try {
-            // Load Books
             const resBuku = await fetch('api/buku.php');
             const dataBuku = await resBuku.json();
-            
-            // Load Loans
+        
             const resPinjam = await fetch('api/peminjaman.php');
             const dataPinjam = await resPinjam.json();
 
-            // Update Stats
             if (dataBuku.status === 'success') document.getElementById('stat-buku').innerText = dataBuku.data.length;
             if (dataPinjam.status === 'success') {
                 const aktif = dataPinjam.data.filter(p => p.status === 'dipinjam').length;
                 document.getElementById('stat-pinjam').innerText = aktif;
             }
 
-            // Render Table
             const tableBody = document.getElementById('buku-table-body');
             tableBody.innerHTML = '';
             

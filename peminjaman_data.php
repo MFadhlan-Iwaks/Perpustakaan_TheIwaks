@@ -12,7 +12,7 @@ include 'layouts/header.php';
 
 <div class="main-content">
     <div class="card-container">
-        <h3 class="header-title">📋 Data Peminjaman Buku (via API)</h3>
+        <h3 class="header-title">📋 Data Peminjaman Buku</h3>
 
         <div class="table-responsive">
             <table>

@@ -13,7 +13,8 @@ include 'layouts/header.php';
 <div class="main-content">
     <div class="card-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h3 class="header-title" style="margin-bottom: 0; border: none; padding: 0;">👥 Kelola Pengguna (via API)</h3>
+            <h3 class="header-title" style="margin-bottom: 0; border: none; padding: 0;">👥 Kelola Pengguna
+            </h3>
             <a href="user_tambah.php" class="btn-primary">+ Tambah Pengguna</a>
         </div>
 
@@ -29,8 +30,9 @@ include 'layouts/header.php';
                     </tr>
                 </thead>
                 <tbody id="user-table-body">
-                    <!-- Data akan diisi oleh JavaScript dari API -->
-                    <tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr>
+                    <tr>
+                        <td colspan="5" style="text-align:center;">Memuat data...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -38,15 +40,14 @@ include 'layouts/header.php';
 </div>
 
 <script>
-    // FUNGSI READ (GET) VIA API
     async function loadUsers() {
         try {
             const response = await fetch('api/user.php');
             const result = await response.json();
-            
+
             const tableBody = document.getElementById('user-table-body');
-            tableBody.innerHTML = ''; // Kosongkan tabel
-            
+            tableBody.innerHTML = ''; 
+
             if (result.status === 'success') {
                 result.data.forEach((user, index) => {
                     const row = `
@@ -81,7 +82,6 @@ include 'layouts/header.php';
         }
     }
 
-    // FUNGSI DELETE VIA API
     async function hapusUser(idUser, nama) {
         if (confirm(`Yakin ingin menghapus pengguna "${nama}"?`)) {
             try {
@@ -91,7 +91,7 @@ include 'layouts/header.php';
                 const result = await response.json();
                 alert(result.message);
                 if (result.status === 'success') {
-                    loadUsers(); // Refresh tabel setelah hapus
+                    loadUsers(); 
                 }
             } catch (error) {
                 alert('Gagal menghapus pengguna.');
@@ -99,7 +99,6 @@ include 'layouts/header.php';
         }
     }
 
-    // Jalankan loadUsers saat halaman selesai dimuat
     document.addEventListener('DOMContentLoaded', loadUsers);
 </script>
 
