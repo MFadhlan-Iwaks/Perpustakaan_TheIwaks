@@ -36,7 +36,36 @@ include 'layouts/header.php';
     </div>
 </div>
 
+<div id="custom-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="modal-title" id="modal-title">Konfirmasi</h3>
+        <p class="modal-text" id="modal-message"></p>
+        <div class="modal-actions">
+            <button onclick="closeModal()" class="btn-modal-cancel">Batal</button>
+            <button id="modal-confirm-btn" class="btn-modal-confirm">Konfirmasi</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    function showModal(message, callback) {
+        const modal = document.getElementById('custom-modal');
+        const messageElement = document.getElementById('modal-message');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+
+        messageElement.innerText = message;
+        modal.classList.add('active');
+
+        confirmBtn.onclick = () => {
+            callback();
+            closeModal();
+        };
+    }
+
+    function closeModal() {
+        document.getElementById('custom-modal').classList.remove('active');
+    }
+
     async function loadPeminjaman() {
         try {
             const response = await fetch('api/peminjaman.php');
@@ -81,25 +110,25 @@ include 'layouts/header.php';
     }
 
     async function kembalikanBuku(id) {
-        if (confirm('Proses pengembalian buku?')) {
+        showModal('Proses pengembalian buku?', async () => {
             try {
                 const response = await fetch(`api/peminjaman.php?id=${id}`, { method: 'PUT' });
                 const result = await response.json();
                 alert(result.message + (result.data ? `\nDenda: Rp ${result.data.denda}` : ''));
                 loadPeminjaman();
             } catch (error) { alert('Gagal memproses.'); }
-        }
+        });
     }
 
     async function hapusPinjaman(id) {
-        if (confirm('Hapus histori peminjaman ini?')) {
+        showModal('Hapus histori peminjaman ini?', async () => {
             try {
                 const response = await fetch(`api/peminjaman.php?id=${id}`, { method: 'DELETE' });
                 const result = await response.json();
                 alert(result.message);
                 loadPeminjaman();
             } catch (error) { alert('Gagal menghapus.'); }
-        }
+        });
     }
 
     document.addEventListener('DOMContentLoaded', loadPeminjaman);

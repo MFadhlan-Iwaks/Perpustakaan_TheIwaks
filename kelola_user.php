@@ -39,7 +39,36 @@ include 'layouts/header.php';
     </div>
 </div>
 
+<div id="custom-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="modal-title" id="modal-title">Konfirmasi Hapus</h3>
+        <p class="modal-text" id="modal-message"></p>
+        <div class="modal-actions">
+            <button onclick="closeModal()" class="btn-modal-cancel">Batal</button>
+            <button id="modal-confirm-btn" class="btn-modal-confirm">Hapus Pengguna</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    let modalConfirmCallback = null;
+
+    function showModal(message, callback) {
+        document.getElementById('modal-message').innerText = message;
+        document.getElementById('custom-modal').classList.add('active');
+        modalConfirmCallback = callback;
+    }
+
+    function closeModal() {
+        document.getElementById('custom-modal').classList.remove('active');
+        modalConfirmCallback = null;
+    }
+
+    document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+        if (modalConfirmCallback) modalConfirmCallback();
+        closeModal();
+    });
+
     async function loadUsers() {
         try {
             const response = await fetch('api/user.php');
@@ -83,7 +112,7 @@ include 'layouts/header.php';
     }
 
     async function hapusUser(idUser, nama) {
-        if (confirm(`Yakin ingin menghapus pengguna "${nama}"?`)) {
+        showModal(`Apakah Anda yakin ingin menghapus pengguna "${nama}"?`, async () => {
             try {
                 const response = await fetch(`api/user.php?id=${idUser}`, {
                     method: 'DELETE'
@@ -96,7 +125,7 @@ include 'layouts/header.php';
             } catch (error) {
                 alert('Gagal menghapus pengguna.');
             }
-        }
+        });
     }
 
     document.addEventListener('DOMContentLoaded', loadUsers);
