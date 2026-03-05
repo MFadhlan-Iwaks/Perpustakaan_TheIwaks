@@ -1,137 +1,127 @@
 <?php
 session_start();
 require_once 'config/koneksi.php';
+require_once 'models/Peminjaman.php';
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'petugas') {
     header("Location: index.php");
     exit();
 }
 
+$database = new Database();
+$db = $database->getConnection();
+$pinjamModel = new Peminjaman($db);
+$data_peminjaman = $pinjamModel->getAll();
+
 include 'layouts/header.php';
 ?>
 
-<div class="main-content">
-    <div class="card-container">
-        <h3 class="header-title">📋 Data Peminjaman Buku</h3>
+<div class="card-container">
+    <h3 class="header-title">Data Peminjaman Buku</h3>
 
-        <div class="table-responsive">
-            <table>
-                <thead>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; min-width: 900px;">
+            <thead>
+                <tr>
+                    <th style="width: 18%;">Nama Peminjam</th>
+                    <th style="width: 25%;">Judul Buku</th>
+                    <th style="width: 13%;">Tgl Pinjam</th>
+                    <th style="width: 13%;">Tenggat</th>
+                    <th style="width: 15%;">Status & Denda</th>
+                    <th style="width: 16%; text-align: center;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (count($data_peminjaman) > 0): ?>
+                    <?php foreach ($data_peminjaman as $pinjam): ?>
+                        <tr>
+                            <td style="vertical-align: middle;"><strong><?= $pinjam['nama_lengkap']; ?></strong></td>
+                            <td style="vertical-align: middle;"><?= $pinjam['judul']; ?></td>
+                            <td style="vertical-align: middle;"><?= date('d M Y', strtotime($pinjam['tanggal_pinjam'])); ?></td>
+                            <td style="vertical-align: middle; color: #ef4444; font-weight: 500;">
+                                <?= date('d M Y', strtotime($pinjam['tanggal_tenggat'])); ?>
+                            </td>
+                            <td style="vertical-align: middle;">
+                                <?php if ($pinjam['status'] == 'dipinjam'): ?>
+                                    <span style="display: inline-block; padding: 4px 10px; background: #fef2f2; color: #dc3545; border-radius: 20px; font-size: 12px; font-weight: bold;">Sedang Dipinjam</span>
+                                <?php else: ?>
+                                    <span style="display: inline-block; padding: 4px 10px; background: #f0fdf4; color: #10b981; border-radius: 20px; font-size: 12px; font-weight: bold;">Dikembalikan</span><br>
+                                    <small style="color: #64748b; display: inline-block; margin-top: 4px;">(<?= date('d M Y', strtotime($pinjam['tanggal_dikembalikan'])); ?>)</small>
+                                <?php endif; ?>
+
+                                <?php if ($pinjam['status'] == 'dikembalikan'): ?>
+                                    <br>
+                                    <?php if ($pinjam['denda'] > 0): ?>
+                                        <span style="display: inline-block; margin-top: 5px; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                                            Denda: Rp <?= number_format($pinjam['denda'], 0, ',', '.'); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="display: inline-block; margin-top: 5px; color: #10b981; font-size: 12px; font-weight: bold;">Tepat Waktu</span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </td>
+                            <td style="vertical-align: middle;">
+                                <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+                                    <?php if ($pinjam['status'] == 'dipinjam'): ?>
+                                        <a href="#"
+                                            onclick="kembalikanBuku(<?= $pinjam['id_peminjaman']; ?>, '<?= addslashes($pinjam['judul']); ?>', '<?= addslashes($pinjam['nama_lengkap']); ?>'); return false;"
+                                            class="btn-primary"
+                                            style="background: linear-gradient(135deg, #f59e0b, #d97706); font-size: 12px; padding: 6px 10px; border-radius: 6px; box-shadow: none;">Selesaikan</a>
+                                    <?php endif; ?>
+                                    
+                                    <a href="peminjaman_edit.php?id=<?= $pinjam['id_peminjaman']; ?>" class="btn-primary" 
+                                        style="background: #0ea5e9; font-size: 12px; padding: 6px 10px; border-radius: 6px; box-shadow: none;">Edit</a>
+                                    
+                                    <a href="#" onclick="hapusPeminjaman(<?= $pinjam['id_peminjaman']; ?>); return false;" class="btn-danger" 
+                                        style="font-size: 12px; padding: 6px 10px; border-radius: 6px;">Hapus</a>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
                     <tr>
-                        <th>No</th>
-                        <th>Nama Peminjam</th>
-                        <th>Judul Buku</th>
-                        <th>Tgl Pinjam</th>
-                        <th>Tgl Tenggat</th>
-                        <th>Status</th>
-                        <th>Denda</th>
-                        <th>Aksi</th>
+                        <td colspan="6" style="text-align:center; padding: 40px; color: #64748b;">Belum ada data peminjaman saat ini.</td>
                     </tr>
-                </thead>
-                <tbody id="pinjam-table-body">
-                    <tr><td colspan="8" style="text-align:center;">Memuat data...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div id="custom-modal" class="modal-overlay">
-    <div class="modal-box">
-        <h3 class="modal-title" id="modal-title">Konfirmasi</h3>
-        <p class="modal-text" id="modal-message"></p>
-        <div class="modal-actions">
-            <button onclick="closeModal()" class="btn-modal-cancel">Batal</button>
-            <button id="modal-confirm-btn" class="btn-modal-confirm">Konfirmasi</button>
-        </div>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    function showModal(message, callback) {
-        const modal = document.getElementById('custom-modal');
-        const messageElement = document.getElementById('modal-message');
-        const confirmBtn = document.getElementById('modal-confirm-btn');
-
-        messageElement.innerText = message;
-        modal.classList.add('active');
-
-        confirmBtn.onclick = () => {
-            callback();
-            closeModal();
-        };
-    }
-
-    function closeModal() {
-        document.getElementById('custom-modal').classList.remove('active');
-    }
-
-    async function loadPeminjaman() {
+// Fungsi Mengembalikan Buku (Auto hitung denda & tambah stok)
+function kembalikanBuku(id, judul, nama) {
+    showModal(`Konfirmasi pengembalian buku ${judul} oleh ${nama}?`, async function() {
         try {
-            const response = await fetch('api/peminjaman.php');
+            const response = await fetch(`api/peminjaman.php?id=${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(null) 
+            });
             const result = await response.json();
-            const tableBody = document.getElementById('pinjam-table-body');
-            tableBody.innerHTML = '';
-
-            if (result.status === 'success') {
-                result.data.forEach((p, index) => {
-                    const statusBadge = p.status === 'dipinjam' 
-                        ? `<span style="background: #fef9c3; color: #854d0e; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;">Dipinjam</span>`
-                        : `<span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;">Dikembalikan</span>`;
-
-                    const actionBtn = p.status === 'dipinjam'
-                        ? `<div style="display:flex; gap:5px;">
-                            <button onclick="kembalikanBuku(${p.id_peminjaman})" class="btn-primary" style="background: #22c55e; font-size: 11px; padding: 5px 10px;">Kembalikan</button>
-                            <a href="peminjaman_edit.php?id=${p.id_peminjaman}" class="btn-primary" style="background: #0ea5e9; font-size: 11px; padding: 5px 10px;">Edit</a>
-                           </div>`
-                        : `<div style="display:flex; gap:5px;">
-                            <a href="peminjaman_edit.php?id=${p.id_peminjaman}" class="btn-primary" style="background: #0ea5e9; font-size: 11px; padding: 5px 10px;">Edit</a>
-                            <button onclick="hapusPinjaman(${p.id_peminjaman})" class="btn-danger" style="font-size: 11px; padding: 5px 10px;">Hapus</button>
-                           </div>`;
-
-                    const row = `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${p.nama_lengkap}</td>
-                            <td><strong>${p.judul}</strong></td>
-                            <td>${p.tanggal_pinjam}</td>
-                            <td>${p.tanggal_tenggat}</td>
-                            <td>${statusBadge}</td>
-                            <td style="color: ${p.denda > 0 ? 'red' : 'green'}; font-weight: bold;">Rp ${new Intl.NumberFormat('id-ID').format(p.denda)}</td>
-                            <td>${actionBtn}</td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
-                });
-            }
-        } catch (error) {
-            console.error('Gagal memuat data:', error);
+            alert(result.message);
+            if(result.status === 'success') location.reload();
+        } catch (e) {
+            alert('Gagal memproses pengembalian buku');
         }
-    }
+    });
+}
 
-    async function kembalikanBuku(id) {
-        showModal('Proses pengembalian buku?', async () => {
-            try {
-                const response = await fetch(`api/peminjaman.php?id=${id}`, { method: 'PUT' });
-                const result = await response.json();
-                alert(result.message + (result.data ? `\nDenda: Rp ${result.data.denda}` : ''));
-                loadPeminjaman();
-            } catch (error) { alert('Gagal memproses.'); }
-        });
-    }
-
-    async function hapusPinjaman(id) {
-        showModal('Hapus histori peminjaman ini?', async () => {
-            try {
-                const response = await fetch(`api/peminjaman.php?id=${id}`, { method: 'DELETE' });
-                const result = await response.json();
-                alert(result.message);
-                loadPeminjaman();
-            } catch (error) { alert('Gagal menghapus.'); }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', loadPeminjaman);
+// Fungsi Hapus Peminjaman
+function hapusPeminjaman(id) {
+    showModal(`Yakin ingin menghapus riwayat peminjaman ini secara permanen dari database?`, async function() {
+        try {
+            const response = await fetch(`api/peminjaman.php?id=${id}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            alert(result.message);
+            if(result.status === 'success') location.reload();
+        } catch (e) {
+            alert('Gagal menghapus data');
+        }
+    });
+}
 </script>
 
 <?php include 'layouts/footer.php'; ?>

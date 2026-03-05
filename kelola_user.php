@@ -7,14 +7,21 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'petugas') {
     exit();
 }
 
+// Mengambil data dengan PDO (mesin baru)
+$database = new Database();
+$db = $database->getConnection();
+$stmt = $db->prepare("SELECT * FROM users ORDER BY role ASC, nama_lengkap ASC");
+$stmt->execute();
+$data_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 include 'layouts/header.php';
 ?>
 
 <div class="main-content">
     <div class="card-container">
+
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h3 class="header-title" style="margin-bottom: 0; border: none; padding: 0;">👥 Kelola Pengguna
-            </h3>
+            <h3 class="header-title" style="margin-bottom: 0; border: none; padding: 0;">👥 Kelola Pengguna</h3>
             <a href="user_tambah.php" class="btn-primary">+ Tambah Pengguna</a>
         </div>
 
@@ -29,106 +36,56 @@ include 'layouts/header.php';
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="user-table-body">
-                    <tr>
-                        <td colspan="5" style="text-align:center;">Memuat data...</td>
-                    </tr>
+                <tbody>
+                    <?php $no = 1; ?>
+                    <?php foreach ($data_users as $u): ?>
+                        <tr>
+                            <td><?= $no++; ?></td>
+                            <td><strong><?= $u['nama_lengkap']; ?></strong></td>
+                            <td><?= $u['username']; ?></td>
+                            <td>
+                                <?php if ($u['role'] == 'petugas'): ?>
+                                    <span style="background: #e0e7ff; color: #4338ca; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">🛡️ Petugas</span>
+                                <?php else: ?>
+                                    <span style="background: #f1f5f9; color: #475569; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">👤 User</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($u['id_user'] != $_SESSION['id_user']): ?>
+                                    <div style="display: flex; gap: 8px;">
+                                        <a href="user_edit.php?id=<?= $u['id_user']; ?>" class="btn-primary" 
+                                           style="background: #0ea5e9; font-size: 12px; padding: 6px 10px; border-radius: 6px; box-shadow: none;">Edit</a>
+                                        
+                                        <a href="#" class="btn-danger"
+                                           onclick="hapusUser(<?= $u['id_user']; ?>, '<?= addslashes($u['nama_lengkap']); ?>'); return false;" 
+                                           style="font-size: 12px; padding: 6px 10px; border-radius: 6px;">Hapus</a>
+                                    </div>
+                                <?php else: ?>
+                                    <span style="font-size: 12px; color: #94a3b8; font-style: italic;">Sedang Login</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
-    </div>
-</div>
 
-<div id="custom-modal" class="modal-overlay">
-    <div class="modal-box">
-        <h3 class="modal-title" id="modal-title">Konfirmasi Hapus</h3>
-        <p class="modal-text" id="modal-message"></p>
-        <div class="modal-actions">
-            <button onclick="closeModal()" class="btn-modal-cancel">Batal</button>
-            <button id="modal-confirm-btn" class="btn-modal-confirm">Hapus Pengguna</button>
-        </div>
     </div>
 </div>
 
 <script>
-    let modalConfirmCallback = null;
-
-    function showModal(message, callback) {
-        document.getElementById('modal-message').innerText = message;
-        document.getElementById('custom-modal').classList.add('active');
-        modalConfirmCallback = callback;
-    }
-
-    function closeModal() {
-        document.getElementById('custom-modal').classList.remove('active');
-        modalConfirmCallback = null;
-    }
-
-    document.getElementById('modal-confirm-btn').addEventListener('click', () => {
-        if (modalConfirmCallback) modalConfirmCallback();
-        closeModal();
-    });
-
-    async function loadUsers() {
+function hapusUser(id, nama) {
+    showModal(`Yakin ingin menghapus pengguna ${nama} dari database?`, async function() {
         try {
-            const response = await fetch('api/user.php');
+            const response = await fetch(`api/user.php?id=${id}`, { method: 'DELETE' });
             const result = await response.json();
-
-            const tableBody = document.getElementById('user-table-body');
-            tableBody.innerHTML = ''; 
-
-            if (result.status === 'success') {
-                result.data.forEach((user, index) => {
-                    const row = `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td><strong>${user.nama_lengkap}</strong></td>
-                            <td>${user.username}</td>
-                            <td>
-                                <span style="background: ${user.role === 'petugas' ? '#e0e7ff' : '#f1f5f9'}; 
-                                             color: ${user.role === 'petugas' ? '#4338ca' : '#475569'}; 
-                                             padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
-                                    ${user.role === 'petugas' ? '🛡️ Petugas' : '👤 User'}
-                                </span>
-                            </td>
-                            <td>
-                                ${user.id_user != <?= $_SESSION['id_user']; ?> ? `
-                                    <div style="display: flex; gap: 5px;">
-                                        <a href="user_edit.php?id=${user.id_user}" class="btn-primary" style="background: #0ea5e9; font-size: 12px; padding: 6px 12px; border-radius: 6px;">Edit</a>
-                                        <a href="#" class="btn-danger" style="font-size: 12px; padding: 6px 12px; border-radius: 6px;"
-                                           onclick="hapusUser(${user.id_user}, '${user.nama_lengkap}'); return false;">Hapus</a>
-                                    </div>
-                                ` : '<span style="font-size: 12px; color: #94a3b8; font-style: italic;">Sedang Login</span>'}
-                            </td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
-                });
-            }
-        } catch (error) {
-            console.error('Gagal mengambil data:', error);
-            document.getElementById('user-table-body').innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Gagal memuat data dari API.</td></tr>';
+            alert(result.message);
+            if(result.status === 'success') location.reload();
+        } catch (e) {
+            alert('Gagal menghapus pengguna');
         }
-    }
-
-    async function hapusUser(idUser, nama) {
-        showModal(`Apakah Anda yakin ingin menghapus pengguna "${nama}"?`, async () => {
-            try {
-                const response = await fetch(`api/user.php?id=${idUser}`, {
-                    method: 'DELETE'
-                });
-                const result = await response.json();
-                alert(result.message);
-                if (result.status === 'success') {
-                    loadUsers(); 
-                }
-            } catch (error) {
-                alert('Gagal menghapus pengguna.');
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', loadUsers);
+    });
+}
 </script>
 
 <?php include 'layouts/footer.php'; ?>

@@ -27,14 +27,9 @@ if (isset($_SESSION['role'])) {
         <div class="auth-card">
             <h2>Sign In Perpustakaan</h2>
 
-            <?php
-            if (isset($_SESSION['error_login'])) {
-                echo "<p class='error-message'>" . $_SESSION['error_login'] . "</p>";
-                unset($_SESSION['error_login']);
-            }
-            ?>
+            <div id="alert-box" style="display: none;"></div>
 
-            <form id="loginForm">
+            <form id="login-form">
                 <div class="input-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" required autocomplete="off">
@@ -45,61 +40,51 @@ if (isset($_SESSION['role'])) {
                     <input type="password" id="password" name="password" required>
                 </div>
 
-                <div id="api-message" style="margin-bottom: 15px; font-size: 14px; text-align: center;"></div>
-
                 <button type="submit" class="btn-primary">Sign In</button>
             </form>
-
-            <script>
-                document.getElementById('loginForm').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    const username = document.getElementById('username').value;
-                    const password = document.getElementById('password').value;
-                    const messageDiv = document.getElementById('api-message');
-                    
-                    messageDiv.textContent = 'Memproses...';
-                    messageDiv.style.color = '#475569';
-
-                    try {
-                        const response = await fetch('api/auth.php?action=login', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ username, password })
-                        });
-
-                        const result = await response.json();
-
-                        if (result.status === 'success') {
-                            messageDiv.textContent = 'Login Berhasil! Mengalihkan...';
-                            messageDiv.style.color = '#166534';
-                            
-                            setTimeout(() => {
-                                if (result.data.role === 'petugas') {
-                                    window.location.href = 'petugas_dashboard.php';
-                                } else {
-                                    window.location.href = 'user_dashboard.php';
-                                }
-                            }, 1000);
-                        } else {
-                            messageDiv.textContent = result.message;
-                            messageDiv.style.color = '#991b1b';
-                        }
-                    } catch (error) {
-                        messageDiv.textContent = 'Terjadi kesalahan pada server.';
-                        messageDiv.style.color = '#991b1b';
-                        console.error('Error:', error);
-                    }
-                });
-            </script>
 
             <p class="auth-footer">
                 Belum punya akun? <a href="register.php">Sign Up di sini</a>
             </p>
         </div>
     </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
+            e.preventDefault(); // Mencegah reload halaman
+            
+            const data = Object.fromEntries(new FormData(this).entries());
+            const alertBox = document.getElementById('alert-box');
+
+            try {
+                const response = await fetch('api/auth.php?action=login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // Redirect sesuai role
+                    if(result.data.role === 'petugas') {
+                        window.location.href = 'petugas_dashboard.php';
+                    } else {
+                        window.location.href = 'user_dashboard.php';
+                    }
+                } else {
+                    // Tampilkan error dengan gaya CSS lamamu
+                    alertBox.style.display = 'block';
+                    alertBox.className = 'error-message';
+                    alertBox.innerText = result.message;
+                }
+            } catch (error) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'error-message';
+                alertBox.innerText = 'Gagal terhubung ke server.';
+            }
+        });
+    </script>
 </body>
 
 </html>

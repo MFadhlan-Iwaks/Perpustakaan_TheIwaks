@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config/koneksi.php';
+require_once 'models/Peminjaman.php';
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'user') {
     header("Location: index.php");
@@ -9,13 +10,11 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'user') {
 
 $id_user = $_SESSION['id_user'];
 
-$query_pinjam = mysqli_query($koneksi, "
-    SELECT p.*, b.judul, b.gambar 
-    FROM peminjaman p 
-    JOIN buku b ON p.id_buku = b.id_buku 
-    WHERE p.id_user = '$id_user' 
-    ORDER BY p.status ASC, p.tanggal_pinjam DESC
-");
+// Gunakan Model OOP
+$database = new Database();
+$db = $database->getConnection();
+$pinjamModel = new Peminjaman($db);
+$data_pinjam = $pinjamModel->getByUserId($id_user);
 
 include 'layouts/header.php';
 ?>
@@ -35,8 +34,8 @@ include 'layouts/header.php';
                 </tr>
             </thead>
             <tbody>
-                <?php if (mysqli_num_rows($query_pinjam) > 0): ?>
-                    <?php while ($pinjam = mysqli_fetch_assoc($query_pinjam)): ?>
+                <?php if (count($data_pinjam) > 0): ?>
+                    <?php foreach ($data_pinjam as $pinjam): ?>
                         <tr>
                             <td style="text-align: center; vertical-align: middle;">
                                 <?php if ($pinjam['gambar']): ?>
@@ -89,7 +88,7 @@ include 'layouts/header.php';
                                 <?php endif; ?>
                             </td>
                         </tr>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
                         <td colspan="5" style="text-align:center; padding: 40px; color: #64748b;">Kamu belum meminjam buku

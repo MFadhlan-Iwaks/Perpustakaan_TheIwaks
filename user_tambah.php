@@ -11,58 +11,70 @@ include 'layouts/header.php';
 ?>
 
 <div class="main-content">
-    <div class="card-container">
+    <div class="card-container" style="max-width: 600px; margin: 0 auto;">
         <h3 class="header-title">➕ Tambah Pengguna Baru</h3>
 
         <form id="form-tambah-user">
+
             <div style="margin-bottom: 15px;">
-                <label>Nama Lengkap</label>
-                <input type="text" name="nama_lengkap" class="form-control" required style="width: 100%; padding: 10px; margin-top: 5px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #475569;">Nama Lengkap</label>
+                <input type="text" name="nama_lengkap" required placeholder="Masukkan nama lengkap"
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;">
             </div>
+
             <div style="margin-bottom: 15px;">
-                <label>Username</label>
-                <input type="text" name="username" class="form-control" required style="width: 100%; padding: 10px; margin-top: 5px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #475569;">Username</label>
+                <input type="text" name="username" required placeholder="Buat username untuk login"
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;">
             </div>
+
             <div style="margin-bottom: 15px;">
-                <label>Password</label>
-                <input type="password" name="password" class="form-control" required style="width: 100%; padding: 10px; margin-top: 5px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #475569;">Password</label>
+                <input type="password" name="password" required placeholder="Buat password minimal 6 karakter"
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;">
             </div>
-            <div style="margin-bottom: 20px;">
-                <label>Hak Akses</label>
-                <select name="role" class="form-control" required style="width: 100%; padding: 10px; margin-top: 5px;">
-                    <option value="user">User</option>
-                    <option value="petugas">Petugas</option>
+
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #475569;">Hak Akses (Role)</label>
+                <select name="role" required
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; background: white;">
+                    <option value="" disabled selected>-- Pilih Hak Akses --</option>
+                    <option value="user">User (Anggota Perpustakaan)</option>
+                    <option value="petugas">Petugas (Admin)</option>
                 </select>
             </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Simpan</button>
-            <a href="kelola_user.php" style="display: block; text-align: center; margin-top: 15px; color: #64748b;">Kembali</a>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <a href="kelola_user.php"
+                    style="padding: 10px 20px; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 8px; font-weight: 600;">Batal</a>
+                <button type="submit" class="btn-primary"
+                    style="padding: 10px 20px; border: none; border-radius: 8px;">Simpan Pengguna</button>
+            </div>
         </form>
     </div>
 </div>
 
 <script>
-    document.getElementById('form-tambah-user').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
+document.getElementById('form-tambah-user').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this).entries());
 
-        try {
-            const response = await fetch('api/user.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            
-            alert(result.message);
-            if (result.status === 'success') {
-                window.location.href = 'kelola_user.php';
-            }
-        } catch (error) {
-            alert('Gagal menambah user.');
+    try {
+        const response = await fetch('api/user.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        
+        alert(result.message);
+        if (result.status === 'success') {
+            window.location.href = 'kelola_user.php';
         }
-    });
+    } catch (error) {
+        alert('Gagal menyimpan pengguna. Pastikan server merespons.');
+    }
+});
 </script>
 
 <?php include 'layouts/footer.php'; ?>

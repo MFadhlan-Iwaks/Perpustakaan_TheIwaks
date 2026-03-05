@@ -10,144 +10,78 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'user') {
 include 'layouts/header.php';
 ?>
 
-<div class="main-content">
-    <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
-        <div>
-            <h2 style="font-size: 32px; color: #1e293b; margin: 0; font-weight: 800; letter-spacing: -0.5px;">📚 Katalog Perpustakaan</h2>
-            <p style="color: #64748b; margin-top: 5px; font-size: 16px;">Temukan inspirasi dan ilmu pengetahuan baru hari ini.</p>
-        </div>
-        <div style="position: relative; width: 100%; max-width: 450px;">
-            <input type="text" id="search-book" placeholder="Cari berdasarkan judul, penulis, atau kategori..." 
-                style="width: 100%; padding: 16px 15px 16px 50px; border-radius: 16px; border: 1px solid #e2e8f0; font-size: 15px; outline: none; transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); background: white;">
-            <span style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 20px;">🔍</span>
-        </div>
+<div class="card-container">
+    <h3 class="header-title">Katalog Buku Tersedia</h3>
+
+    <div style="margin-bottom: 30px; display: flex; gap: 10px; max-width: 600px;">
+        <input type="text" id="search-input" placeholder="Cari judul buku, penulis, atau kategori..."
+            style="flex: 1; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none;">
+        <button onclick="searchBooks()" class="btn-primary" style="padding: 12px 24px; border-radius: 8px;">Cari</button>
     </div>
 
-    <div class="card-container" style="background-color: #f1f5f9; padding: 40px; border: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); min-height: 400px;">
-        <div id="book-grid" class="grid-buku">
-            <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
-                <p style="color: #64748b;">Sedang memuat katalog buku...</p>
-            </div>
+    <div class="grid-buku" id="book-grid">
         </div>
-    </div>
-</div>
-
-<div id="custom-modal" class="modal-overlay">
-    <div class="modal-box">
-        <h3 class="modal-title" id="modal-title">Konfirmasi Pinjam</h3>
-        <p class="modal-text" id="modal-message"></p>
-        <div class="modal-actions">
-            <button onclick="closeModal()" class="btn-modal-cancel">Batal</button>
-            <button id="modal-confirm-btn" class="btn-modal-confirm">Konfirmasi</button>
-        </div>
-    </div>
 </div>
 
 <script>
-    let allBooks = [];
-    let modalConfirmCallback = null;
-
-    function showModal(message, callback) {
-        document.getElementById('modal-message').innerText = message;
-        document.getElementById('custom-modal').classList.add('active');
-        modalConfirmCallback = callback;
-    }
-
-    function closeModal() {
-        document.getElementById('custom-modal').classList.remove('active');
-        modalConfirmCallback = null;
-    }
-
-    document.getElementById('modal-confirm-btn').addEventListener('click', () => {
-        if (modalConfirmCallback) modalConfirmCallback();
-        closeModal();
-    });
-
-    async function loadBooks() {
+    async function loadBooks(keyword = '') {
+        const grid = document.getElementById('book-grid');
         try {
             const response = await fetch('api/buku.php');
             const result = await response.json();
             
             if (result.status === 'success') {
-                allBooks = result.data;
-                renderBooks(allBooks);
-            }
-        } catch (error) { 
-            document.getElementById('book-grid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 50px;"><p style="color: #ef4444;">Gagal memuat katalog buku. Pastikan koneksi server tersedia.</p></div>'; 
-        }
-    }
+                let books = result.data;
+                
+                // Filter client-side sederhana untuk pencarian
+                if(keyword) {
+                    books = books.filter(b => 
+                        b.judul.toLowerCase().includes(keyword.toLowerCase()) || 
+                        b.penulis.toLowerCase().includes(keyword.toLowerCase())
+                    );
+                }
 
-    function renderBooks(books) {
-        const grid = document.getElementById('book-grid');
-        grid.innerHTML = '';
+                grid.innerHTML = books.map(buku => `
+                    <div class="card-buku">
+                        ${buku.gambar 
+                            ? `<img src="assets/images/buku/${buku.gambar}" alt="Cover ${buku.judul}">`
+                            : `<div style="height: 200px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: #94a3b8;">No Cover</div>`
+                        }
+                        <h4>${buku.judul}</h4>
+                        <p class="penulis">${buku.penulis}</p>
+                        <p style="font-size: 12px; color: #64748b; margin-bottom: 15px; font-weight: 600; text-transform: uppercase;">${buku.kategori}</p>
 
-        if (books.length === 0) {
-            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 80px;"><p style="color: #64748b; font-size: 18px; font-weight: 500;">Oops! Buku yang Anda cari tidak ditemukan.</p></div>';
-            return;
-        }
-
-        books.forEach((b) => {
-            const img = b.gambar ? `assets/images/buku/${b.gambar}` : 'https://via.placeholder.com/200x300?text=No+Cover';
-            const card = `
-                <div class="card-buku">
-                    <div style="position: relative; margin-bottom: 15px;">
-                        <img src="${img}" alt="${b.judul}">
-                        <span style="position: absolute; top: 12px; right: 12px; font-size: 11px; background: rgba(255,255,255,0.95); padding: 5px 12px; border-radius: 20px; color: #1e293b; font-weight: 700; backdrop-filter: blur(4px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05);">${b.kategori}</span>
-                    </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; padding: 0 5px;">
-                        <h4 style="margin: 0 0 10px 0; font-size: 17px; color: #1e293b; font-weight: 700; height: 48px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: center;">${b.judul}</h4>
-                        <p class="penulis" style="margin-bottom: 20px; text-align: center;">${b.penulis}</p>
-                        
-                        <div class="card-footer-info" style="margin-top: auto;">
-                            <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
-                                <span class="stok-badge" style="background: ${b.stok > 0 ? '#dcfce7' : '#fee2e2'}; color: ${b.stok > 0 ? '#166534' : '#991b1b'};">
-                                    ${b.stok > 0 ? `Stok: ${b.stok}` : 'Stok Habis'}
-                                </span>
-                            </div>
-                            
-                            ${b.stok > 0 
-                                ? `<button onclick="pinjamBuku(${b.id_buku}, '${b.judul.replace(/'/g, "\\'")}')" class="btn-pinjam">Pinjam Buku</button>`
-                                : `<button disabled class="btn-pinjam" style="background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none;">Stok Habis</button>`
-                            }
+                        <div class="card-footer-info">
+                            <span class="stok-badge">Stok: ${buku.stok}</span>
+                            <button onclick="pinjamBuku(${buku.id_buku}, '${buku.judul.replace(/'/g, "\\'")}')" class="btn-pinjam">Pinjam Buku</button>
                         </div>
                     </div>
-                </div>
-            `;
-            grid.innerHTML += card;
-        });
+                `).join('');
+            }
+        } catch (e) { grid.innerHTML = 'Gagal memuat buku.'; }
     }
 
-    document.getElementById('search-book').addEventListener('input', (e) => {
-        const keyword = e.target.value.toLowerCase();
-        const filtered = allBooks.filter(b => 
-            b.judul.toLowerCase().includes(keyword) || 
-            b.penulis.toLowerCase().includes(keyword) ||
-            b.kategori.toLowerCase().includes(keyword)
-        );
-        renderBooks(filtered);
-    });
+    function searchBooks() {
+        const val = document.getElementById('search-input').value;
+        loadBooks(val);
+    }
 
-    async function pinjamBuku(idBuku, judul) {
-        showModal(`Konfirmasi: Apakah Anda yakin ingin meminjam buku "${judul}"?`, async () => {
+    function pinjamBuku(id, judul) {
+        showModal(`Pinjam buku ${judul} ini selama 7 hari?`, async function() {
             try {
                 const response = await fetch('api/peminjaman.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id_user: <?= $_SESSION['id_user']; ?>,
-                        id_buku: idBuku
-                    })
+                    body: JSON.stringify({ id_user: <?= $_SESSION['id_user']; ?>, id_buku: id })
                 });
-                const result = await response.json();
-            
-                alert(result.message);
-                
-                if (result.status === 'success') loadBooks();
-            } catch (error) { alert('Gagal memproses peminjaman buku.'); }
+                const res = await response.json();
+                alert(res.message);
+                if(res.status === 'success') loadBooks();
+            } catch (e) { alert('Gagal memproses pinjaman'); }
         });
     }
 
-    document.addEventListener('DOMContentLoaded', loadBooks);
+    document.addEventListener('DOMContentLoaded', () => loadBooks());
 </script>
 
 <?php include 'layouts/footer.php'; ?>

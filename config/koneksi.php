@@ -1,12 +1,29 @@
 <?php
-$host = "localhost";
-$user = "root"; 
-$pass = "";     
-$db   = "db_perpustakaan";
 
-$koneksi = mysqli_connect($host, $user, $pass, $db);
+class Database {
+    private $host = "localhost";
+    private $user = "root"; 
+    private $pass = "";     
+    private $db   = "db_perpustakaan";
+    public $conn;
 
-if (!$koneksi) {
-    die("Koneksi ke database gagal: " . mysqli_connect_error());
+    public function getConnection() {
+        $this->conn = null;
+
+        try {
+            $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db . ";charset=utf8mb4";
+
+            $this->conn = new PDO($dsn, $this->user, $this->pass);
+            
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+        } catch(PDOException $exception) {
+            echo "Koneksi ke database gagal: " . $exception->getMessage();
+        }
+
+        return $this->conn;
+    }
 }
 ?>

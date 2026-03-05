@@ -1,93 +1,98 @@
 <?php
 session_start();
 require_once 'config/koneksi.php';
+require_once 'models/User.php';
+require_once 'models/Buku.php';
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'petugas') {
-    header("Location: index.php");
-    exit();
+    header("Location: index.php"); exit();
 }
 
 $id_peminjaman = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-include 'layouts/header.php';
+$database = new Database();
+$db = $database->getConnection();
+$semua_user = (new User($db))->getAll();
+$semua_buku = (new Buku($db))->getAll();
 
-$users = mysqli_query($koneksi, "SELECT id_user, nama_lengkap FROM users WHERE role = 'user'");
-$books = mysqli_query($koneksi, "SELECT id_buku, judul FROM buku");
+include 'layouts/header.php';
 ?>
 
-<div class="main-content">
-    <div class="card-container">
-        <h3 class="header-title">✏️ Edit Transaksi Peminjaman</h3>
-        <form id="form-edit-pinjam">
-            <div style="margin-bottom: 15px;">
-                <label>Peminjam</label>
-                <select name="id_user" id="id_user" class="form-control" required style="width:100%; padding:8px; margin-top:5px;">
-                    <?php while($u = mysqli_fetch_assoc($users)): ?>
-                        <option value="<?= $u['id_user']; ?>"><?= $u['nama_lengkap']; ?></option>
-                    <?php endwhile; ?>
+<div class="card-container" style="max-width: 700px; margin: 0 auto;">
+    <h3 class="header-title">✏️ Edit Transaksi Peminjaman</h3>
+    <form id="form-edit-pinjam">
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Peminjam</label>
+            <select name="id_user" id="id_user" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                <?php foreach($semua_user as $u): if($u['role'] == 'user'): ?>
+                    <option value="<?= $u['id_user']; ?>"><?= $u['nama_lengkap']; ?></option>
+                <?php endif; endforeach; ?>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Buku yang Dipinjam</label>
+            <select name="id_buku" id="id_buku" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                <?php foreach($semua_buku as $b): ?>
+                    <option value="<?= $b['id_buku']; ?>"><?= $b['judul']; ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Tgl Pinjam</label>
+                <input type="date" name="tanggal_pinjam" id="tanggal_pinjam" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            </div>
+            <div style="flex: 1;">
+                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Tgl Tenggat</label>
+                <input type="date" name="tanggal_tenggat" id="tanggal_tenggat" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+            <div style="flex: 1;">
+                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Status</label>
+                <select name="status" id="status" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    <option value="dipinjam">Dipinjam</option>
+                    <option value="dikembalikan">Dikembalikan</option>
                 </select>
             </div>
-            <div style="margin-bottom: 15px;">
-                <label>Buku</label>
-                <select name="id_buku" id="id_buku" class="form-control" required style="width:100%; padding:8px; margin-top:5px;">
-                    <?php while($b = mysqli_fetch_assoc($books)): ?>
-                        <option value="<?= $b['id_buku']; ?>"><?= $b['judul']; ?></option>
-                    <?php endwhile; ?>
-                </select>
+            <div style="flex: 1;">
+                <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569;">Denda (Rp)</label>
+                <input type="number" name="denda" id="denda" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div><label>Tgl Pinjam</label><input type="date" name="tanggal_pinjam" id="tanggal_pinjam" class="form-control" required style="width:100%; padding:8px; margin-top:5px;"></div>
-                <div><label>Tgl Tenggat</label><input type="date" name="tanggal_tenggat" id="tanggal_tenggat" class="form-control" required style="width:100%; padding:8px; margin-top:5px;"></div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                <div><label>Status</label>
-                    <select name="status" id="status" class="form-control" required style="width:100%; padding:8px; margin-top:5px;">
-                        <option value="dipinjam">Dipinjam</option>
-                        <option value="dikembalikan">Dikembalikan</option>
-                    </select>
-                </div>
-                <div><label>Denda (Rp)</label><input type="number" name="denda" id="denda" class="form-control" value="0" style="width:100%; padding:8px; margin-top:5px;"></div>
-            </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Update Transaksi</button>
-            <a href="peminjaman_data.php" style="display: block; text-align: center; margin-top: 15px; color: #64748b;">Kembali</a>
-        </form>
-    </div>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%;">Update Data Transaksi</button>
+    </form>
 </div>
 
 <script>
     const idPinjam = <?= $id_peminjaman; ?>;
-
     async function loadDetail() {
-        try {
-            const res = await fetch(`api/peminjaman.php?id=${idPinjam}`);
-            const result = await res.json();
-            if (result.status === 'success') {
-                const p = result.data;
-                document.getElementById('id_user').value = p.id_user;
-                document.getElementById('id_buku').value = p.id_buku;
-                document.getElementById('tanggal_pinjam').value = p.tanggal_pinjam;
-                document.getElementById('tanggal_tenggat').value = p.tanggal_tenggat;
-                document.getElementById('status').value = p.status;
-                document.getElementById('denda').value = p.denda;
-            }
-        } catch (e) { alert('Gagal memuat data'); }
+        const res = await fetch(`api/peminjaman.php?id=${idPinjam}`);
+        const result = await res.json();
+        if (result.status === 'success') {
+            const p = result.data;
+            document.getElementById('id_user').value = p.id_user;
+            document.getElementById('id_buku').value = p.id_buku;
+            document.getElementById('tanggal_pinjam').value = p.tanggal_pinjam;
+            document.getElementById('tanggal_tenggat').value = p.tanggal_tenggat;
+            document.getElementById('status').value = p.status;
+            document.getElementById('denda').value = p.denda;
+        }
     }
-
     document.getElementById('form-edit-pinjam').addEventListener('submit', async function(e) {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(this).entries());
-        try {
-            const response = await fetch(`api/peminjaman.php?id=${idPinjam}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            alert(result.message);
-            if (result.status === 'success') window.location.href = 'peminjaman_data.php';
-        } catch (e) { alert('Gagal update'); }
+        const response = await fetch(`api/peminjaman.php?id=${idPinjam}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const res = await response.json();
+        alert(res.message);
+        if (res.status === 'success') window.location.href = 'peminjaman_data.php';
     });
-
     document.addEventListener('DOMContentLoaded', loadDetail);
 </script>
-
 <?php include 'layouts/footer.php'; ?>
